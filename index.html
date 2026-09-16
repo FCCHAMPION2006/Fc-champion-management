@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#101820">
+<meta name="description" content="FC Champion Management — gestion des joueurs et activités du club">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icone-192.png">
+<title>FC Champion Management</title>
+<style>
+:root{--dark:#101820;--pink:#c51f69;--gold:#d5a928;--blue:#1261a0;--bg:#f4f6f8}
+*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:var(--bg);color:#17212b}
+header{background:var(--dark);color:#fff;padding:12px 16px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:5}
+header img{width:46px;height:46px;object-fit:contain;border-radius:50%;background:#fff}header b{font-size:17px;line-height:1.15}
+.wrap{max-width:1100px;margin:auto;padding:16px}.hidden{display:none!important}
+.login{max-width:410px;margin:45px auto;background:#fff;padding:25px;border-radius:18px;box-shadow:0 5px 28px #0002;text-align:center}
+.login img{width:115px;height:115px;object-fit:contain}.login h1{margin:8px 0}
+input,select{width:100%;padding:12px;margin:6px 0 13px;border:1px solid #cbd5df;border-radius:9px;background:#fff;font-size:16px}
+button,.btn{background:var(--blue);color:#fff;border:0;border-radius:9px;padding:11px 15px;cursor:pointer;font-size:15px;text-decoration:none}
+button.secondary{background:#66717c}.danger{background:#b42318}
+nav.card{display:flex;gap:7px;flex-wrap:wrap}.card{background:#fff;border-radius:14px;padding:18px;box-shadow:0 2px 12px #0001;margin-bottom:16px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(165px,1fr));gap:14px}.num{font-size:30px;font-weight:700}
+.toolbar{display:flex;gap:9px;flex-wrap:wrap;align-items:center}.toolbar input{max-width:420px;margin:0}
+table{width:100%;border-collapse:collapse}th,td{padding:10px;border-bottom:1px solid #e5e7eb;text-align:left}
+.modal{position:fixed;inset:0;background:#0008;display:flex;align-items:center;justify-content:center;padding:15px;z-index:20}
+.modal>div{background:#fff;max-width:610px;width:100%;padding:22px;border-radius:15px;max-height:92vh;overflow:auto}
+.small{font-size:12px;color:#667085}.err{color:#b42318}.ok{color:#067647}
+.install{background:#fff2c7;color:#5f4800;border:1px solid #e2c35b;padding:10px;border-radius:9px;margin-bottom:15px}
+@media(max-width:600px){th:nth-child(4),td:nth-child(4){display:none}.wrap{padding:12px}}
+</style>
+</head>
+<body>
+
+<div id="loginScreen" class="login">
+<img src="icone-192.png" alt="Logo FC Champion">
+<h1>FC CHAMPION</h1>
+<p>Management</p>
+<label>Identifiant</label><input id="loginUser" autocomplete="username" value="admin">
+<label>Mot de passe</label><input id="loginPass" type="password" autocomplete="current-password">
+<button onclick="login()">Se connecter</button>
+<p id="loginMsg" class="err"></p>
+<p class="small">Compte initial : <b>admin</b> / <b>ChangeMe123!</b></p>
+</div>
+
+<div id="app" class="hidden">
+<header>
+<img src="icone-192.png" alt="">
+<div><b>FC CHAMPION MANAGEMENT</b><br><span class="small" style="color:#ddd">L’école d’abord, le football ensuite.</span></div>
+<div style="margin-left:auto"><button class="danger" onclick="logout()">Déconnexion</button></div>
+</header>
+
+<div class="wrap">
+<div id="installBox" class="install hidden">
+<b>Installer l’application :</b> appuyez sur <b>Installer</b> ci-dessous si votre navigateur le permet.
+<button onclick="installPWA()" style="margin-left:8px;background:#5f4800">Installer</button>
+</div>
+
+<nav class="card">
+<button onclick="show('dashboard')">📊 Tableau de bord</button>
+<button onclick="show('players')">⚽ Joueurs</button>
+<button onclick="show('attendance')">📅 Présences</button>
+<button onclick="show('payments')">💰 Paiements</button>
+</nav>
+
+<section id="dashboard">
+<h1>Tableau de bord</h1>
+<div class="cards">
+<div class="card"><div>Joueurs</div><div id="kPlayers" class="num">0</div></div>
+<div class="card"><div>Actifs</div><div id="kActive" class="num">0</div></div>
+<div class="card"><div>Catégories</div><div class="num">16</div></div>
+<div class="card"><div>Paiements</div><div id="kPay" class="num">0 Gdes</div></div>
+</div>
+<div class="card"><h3>FC Champion</h3><p>Gestion centralisée des joueurs, présences et finances. Les autres modules peuvent être ajoutés sans changer la base.</p></div>
+</section>
+
+<section id="players" class="hidden">
+<div class="toolbar"><h1 style="margin-right:auto">Joueurs</h1><input id="search" placeholder="Nom, prénom ou code" oninput="renderPlayers()"><button onclick="openPlayer()">+ Ajouter</button></div>
+<div class="card" style="overflow:auto"><table><thead><tr><th>Code</th><th>Nom</th><th>Cat.</th><th>Poste</th><th>Statut</th><th></th></tr></thead><tbody id="playerRows"></tbody></table></div>
+</section>
+
+<section id="attendance" class="hidden"><h1>Présences</h1><div class="card" id="attendanceList"></div></section>
+<section id="payments" class="hidden"><h1>Paiements</h1><div class="card"><p>Total : <b id="paymentTotal">0 Gdes</b></p><div id="paymentList"></div></div></section>
+</div></div>
+
+<div id="modal" class="modal hidden"><div>
+<h2>Ajouter un joueur</h2>
+<label>Code joueur</label><input id="pCode" placeholder="FCC-0001">
+<label>Prénom</label><input id="pFirst">
+<label>Nom</label><input id="pLast">
+<label>Date de naissance</label><input id="pBirth" type="date">
+<label>Catégorie</label><select id="pCat"></select>
+<label>Poste</label><select id="pPos"><option>Gardien</option><option>Défenseur</option><option>Milieu</option><option>Attaquant</option></select>
+<label>Téléphone</label><input id="pPhone">
+<label>Statut</label><select id="pStatus"><option>Actif</option><option>Inactif</option><option>En attente</option></select>
+<button onclick="savePlayer()">Enregistrer</button> <button class="secondary" onclick="closeModal()">Annuler</button>
+<p id="formMsg" class="err"></p>
+</div></div>
+
+<script>
+const cats=["U5","U6","U7","U8","U9","U10","U11","U12","U13","U14","U15","U16","U17","U18","U19","U20"];
+let players=[],payments=[],attendance=[];
+try{players=JSON.parse(localStorage.getItem("fc_players")||"[]")}catch(e){}
+try{payments=JSON.parse(localStorage.getItem("fc_payments")||"[]")}catch(e){}
+try{attendance=JSON.parse(localStorage.getItem("fc_attendance")||"[]")}catch(e){}
+const $=id=>document.getElementById(id);
+cats.forEach(c=>$("pCat").innerHTML+=`<option>${c}</option>`);
+
+function login(){
+ if($("loginUser").value==="admin"&&$("loginPass").value==="ChangeMe123!"){
+  try{sessionStorage.fc=1}catch(e){}
+  $("loginScreen").classList.add("hidden");$("app").classList.remove("hidden");refresh();
+ }else $("loginMsg").textContent="Identifiant ou mot de passe incorrect.";
+}
+function logout(){try{sessionStorage.clear()}catch(e){}location.reload()}
+try{if(sessionStorage.fc){$("loginScreen").classList.add("hidden");$("app").classList.remove("hidden")}}catch(e){}
+function show(id){["dashboard","players","attendance","payments"].forEach(x=>$(x).classList.toggle("hidden",x!==id));refresh()}
+function openPlayer(){
+ const n=players.length+1;$("pCode").value="FCC-"+String(n).padStart(4,"0");
+ $("pFirst").value="";$("pLast").value="";$("pBirth").value="";$("pPhone").value="";
+ $("pStatus").value="Actif";$("pCat").value="U5";$("pPos").value="Gardien";$("formMsg").textContent="";
+ $("modal").classList.remove("hidden");
+}
+function closeModal(){$("modal").classList.add("hidden")}
+function savePlayer(){
+ let p={code:$("pCode").value.trim(),first:$("pFirst").value.trim(),last:$("pLast").value.trim(),birth:$("pBirth").value,cat:$("pCat").value,pos:$("pPos").value,phone:$("pPhone").value,status:$("pStatus").value};
+ if(!p.code||!p.first||!p.last){$("formMsg").textContent="Code, prénom et nom sont obligatoires.";return}
+ if(players.some(x=>x.code.toLowerCase()===p.code.toLowerCase())){$("formMsg").textContent="Ce code existe déjà.";return}
+ players.push(p);persist();closeModal();refresh();alert("Joueur enregistré.");
+}
+function removePlayer(code){if(confirm("Supprimer ce joueur ?")){players=players.filter(p=>p.code!==code);persist();refresh()}}
+function persist(){try{localStorage.setItem("fc_players",JSON.stringify(players));localStorage.setItem("fc_payments",JSON.stringify(payments));localStorage.setItem("fc_attendance",JSON.stringify(attendance))}catch(e){}}
+function renderPlayers(){
+ let q=($("search").value||"").toLowerCase();
+ let arr=players.filter(p=>(p.code+" "+p.first+" "+p.last+" "+p.cat).toLowerCase().includes(q));
+ $("playerRows").innerHTML=arr.map(p=>`<tr><td>${esc(p.code)}</td><td>${esc(p.first+" "+p.last)}</td><td>${p.cat}</td><td>${p.pos}</td><td>${p.status}</td><td><button class="danger" onclick="removePlayer('${esc(p.code)}')">Supprimer</button></td></tr>`).join("")||`<tr><td colspan="6">Aucun joueur enregistré.</td></tr>`;
+}
+function refresh(){
+ $("kPlayers").textContent=players.length;$("kActive").textContent=players.filter(p=>p.status==="Actif").length;
+ let total=payments.reduce((a,x)=>a+Number(x.amount||0),0);$("kPay").textContent=total.toLocaleString()+" Gdes";$("paymentTotal").textContent=total.toLocaleString()+" Gdes";
+ renderPlayers();$("attendanceList").innerHTML=attendance.length?attendance.map(x=>`<p>${esc(x)}</p>`).join(""):"Aucune présence enregistrée.";
+ $("paymentList").innerHTML=payments.length?payments.map(x=>`<p>${esc(x.player||"")} — ${x.amount} Gdes</p>`).join(""):"Aucun paiement enregistré.";
+}
+function esc(s){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
+let deferredPrompt;
+window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();deferredPrompt=e;$("installBox").classList.remove("hidden")});
+async function installPWA(){if(!deferredPrompt){alert("Pour installer la PWA, ouvrez l’application depuis une adresse HTTPS dans Chrome.");return}deferredPrompt.prompt();deferredPrompt=null}
+if("serviceWorker" in navigator && location.protocol!=="file:"){navigator.serviceWorker.register("sw.js").catch(()=>{})}
+</script>
+</body></html>

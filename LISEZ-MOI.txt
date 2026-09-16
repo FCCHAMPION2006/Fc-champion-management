@@ -1,0 +1,16 @@
+FC CHAMPION MANAGEMENT — PWA
+
+Cette version est une Progressive Web App avec le logo officiel fourni par FC Champion.
+
+ACCÈS :
+Identifiant : admin
+Mot de passe : ChangeMe123!
+
+UTILISATION :
+- Elle fonctionne sur Android et ordinateur.
+- Pour obtenir le bouton « Installer », l'application doit être ouverte depuis une adresse HTTPS (ou localhost).
+- Un fichier HTML ouvert directement depuis le gestionnaire de fichiers peut fonctionner, mais Chrome ne permet généralement pas l'installation PWA dans ce mode.
+- Les données de cette version de démonstration sont stockées localement dans le navigateur.
+
+SÉCURITÉ :
+Cette version n'est pas adaptée à la conservation de données réelles de mineurs en production : elle n'a pas encore de serveur central, de comptes individuels ni de sauvegarde distante. Une version production doit utiliser HTTPS, authentification serveur, rôles, sauvegardes et protections adaptées.
